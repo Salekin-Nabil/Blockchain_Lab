@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="main_lab3.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Coursetro Instructor</h1>
+        <h2 id="instructor">
+            <img id="loader" src="https://cdn.pixabay.com/animation/2023/10/08/03/19/03-19-26-213_256.gif">
+        </h2>
+        <label for="name" class="col-lg-2 control-label">Instructor Name</label>
+        <input id="name" type="text">
+        <label for="age" class="col-lg-2 control-label">Instructor Age</label>
+        <input id="age" type="text">
+        <button id="button">Update Instructor</button>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script>
+        // Initialize Web3
+        let web3;
+        if (typeof window.ethereum !== 'undefined') {
+            web3 = new Web3(window.ethereum);
+            window.ethereum.request({ method: 'eth_requestAccounts' });
+        } else {
+            web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:7545"));
+        }
+
+        // Replace with your contract's ABI and address
+        const ABI = [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "age",
+				"type": "uint256"
+			}
+		],
+		"name": "Instructor",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_fName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_age",
+				"type": "uint256"
+			}
+		],
+		"name": "setInstructor",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getInstructor",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+        const contractAddress = '0xCE98B8874eCF36c9EC567F5378789FD9e455d366';
+
+        // Create the Coursetro instance
+        const contract = new web3.eth.Contract(ABI, contractAddress);
+
+        // Listen for the Instructor event
+        setInterval(() => {
+            contract.getPastEvents('Instructor', {
+                fromBlock: 'latest', // Specify the block range
+                toBlock: 'latest'
+            })
+            .then(events => {
+                events.forEach(event => {
+                    $("#loader").hide();
+                    $("#instructor").html(event.returnValues.name 
+                        + ' (' + event.returnValues.age + ' years old)');
+                    console.log('Event received:', event);
+                });
+            })
+            .catch(error => console.error('Error fetching events:', error));
+        }, 5000); // Poll every 5 seconds
+
+
+
+        // Update instructor on button click
+        $("#button").click(function() {
+            const name = $("#name").val();
+            const age = $("#age").val();
+
+            web3.eth.getAccounts()
+                .then(accounts => {
+                    return contract.methods.setInstructor(name, age).send({ from: accounts[0] });
+                })
+                .then(receipt => {
+                    console.log('Transaction receipt:', receipt);
+                })
+                .catch(error => {
+                    console.error('Error updating instructor:', error);
+                });
+        });
+    </script>
+</body>
+</html>
